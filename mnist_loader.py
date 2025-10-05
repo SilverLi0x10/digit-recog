@@ -21,7 +21,7 @@ def load_data():
     """Return the MNIST data as a tuple containing the training data,
     the validation data, and the test data.
     """
-    with gzip.open("../data/mnist.pkl.gz", "rb") as f:
+    with gzip.open("./data/mnist.pkl.gz", "rb") as f:
         training_data, validation_data, test_data = pickle.load(f, encoding="latin1")
     return (training_data, validation_data, test_data)
 
