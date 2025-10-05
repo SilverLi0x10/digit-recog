@@ -74,6 +74,7 @@ class Network:
     # shuffle gradient down
     def train(self, train_data, epochs, batch_size, eta, test_data=None):
         n = len(train_data)
+        st_time = time.process_time()
 
         for i in range(epochs):
             random.shuffle(train_data)
@@ -84,7 +85,18 @@ class Network:
 
             if test_data:
                 print(
-                    f"Epoch {i}, time: {time.time()}, {self.evaluate(test_data)} / {len(test_data)}"
+                    f"Epoch {i}, time: {time.process_time()-st_time}s, {self.evaluate(test_data)} / {len(test_data)}"
                 )
             else:
-                print(f"Epoch {i}, time: {time.time()}")
+                print(f"Epoch {i}, time: {time.process_time()-st_time}s")
+
+
+"""
+Usage:
+
+import mnist_loader as ml
+tr,v,te=ml.load_data_wrapper()
+import network as nw
+net = nw.Network([784, 30, 10])
+net.train(tr, 100, 10, 3, te)
+"""
