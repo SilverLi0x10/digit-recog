@@ -45,7 +45,7 @@ class Network:
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
         def update(l):
-            nabla_w[-l] = np.dot(acs[-l - 1], delta)
+            nabla_w[-l] = np.dot(delta, acs[-l - 1].transpose())
             nabla_b[-l] = delta
 
         update(1)
@@ -72,7 +72,7 @@ class Network:
         self.biases = [b - eta * (nb / size) for b, nb in zip(self.biases, nabla_b)]
 
     # shuffle gradient down
-    def train(self, train_data, epochs, batch_size, eta, test_data):
+    def train(self, train_data, epochs, batch_size, eta, test_data=None):
         n = len(train_data)
 
         for i in range(epochs):
