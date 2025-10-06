@@ -37,16 +37,17 @@ class Network:
     def evaluate(self, test_data):
         return sum(np.argmax(self.feed_forward(x)) == y for x, y in test_data)
 
-    def back_propagation(self, x, y):
-        acs, zs = self.feed_forward_az(x)
+    def back_propagation(self, xs, ys):
+        acs, zs = self.feed_forward_az(xs)
+        m = xs.shape[1]
 
-        delta = cost_prime(acs[-1], y) * sigmoid_prime(zs[-1])
-        nabla_b = [np.zeros_like(b) for b in self.biases]
+        delta = cost_prime(acs[-1], ys) * sigmoid_prime(zs[-1])
         nabla_w = [np.zeros_like(w) for w in self.weights]
+        nabla_b = [np.zeros_like(b) for b in self.biases]
 
         def update(l):
             nabla_w[-l] = delta @ acs[-l - 1].T
-            nabla_b[-l] = delta
+            nabla_b[-l] = np.sum(delta, axis=1, keepdims=True) / m
 
         update(1)
 
@@ -57,17 +58,12 @@ class Network:
         return nabla_w, nabla_b
 
     def update_batch(self, batch, eta):
-        nabla_w = [np.zeros_like(w) for w in self.weights]
-        nabla_b = [np.zeros_like(b) for b in self.biases]
+        xs = np.hstack([x for x, _ in batch])
+        ys = np.hstack([y for _, y in batch])
+        nabla_w, nabla_b = self.back_propagation(xs, ys)
 
-        for x, y in batch:
-            delta_nabla_w, delta_nabla_b = self.back_propagation(x, y)
-            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-
-        size = len(batch)
-        self.weights = [w - eta * (nw / size) for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b - eta * (nb / size) for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [w - eta * nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b - eta * nb for b, nb in zip(self.biases, nabla_b)]
 
     # shuffle gradient down
     def train(self, train_data, epochs, batch_size, eta, test_data=None):
@@ -96,5 +92,5 @@ import mnist_loader as ml
 tr,v,te=ml.load_data_wrapper()
 import network as nw
 net = nw.Network([784, 30, 10])
-net.train(tr, 100, 10, 3, te)
+net.train(tr, 100, 10, .5, te)
 """
