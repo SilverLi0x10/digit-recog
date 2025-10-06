@@ -21,38 +21,59 @@ class Network:
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
 
-    def feed_forward_az(self, a):
+    def feed_forward_az(self, a, ws=None, bs=None):
+        if ws is None:
+            ws = self.weights
+        if bs is None:
+            bs = self.biases
+
         acs = [a]
         zs = []
-        for w, b in zip(self.weights, self.biases):
+        for w, b in zip(ws, bs):
             z = w @ a + b
             zs.append(z)
             a = sigmoid(z)
             acs.append(a)
         return acs, zs
 
-    def feed_forward(self, a):
-        return self.feed_forward_az(a)[0][-1]
+    def feed_forward(self, a, ws=None, bs=None):
+        return self.feed_forward_az(a, ws, bs)[0][-1]
 
     def evaluate(self, test_data):
         return sum(np.argmax(self.feed_forward(x)) == y for x, y in test_data)
 
-    def back_propagation(self, x, y):
-        acs, zs = self.feed_forward_az(x)
+    def cost(self, x, y, ws=None, bs=None):
+        a = self.feed_forward(x, ws, bs)
+        n = y.shape[0]
+        return np.sum((y - a) ** 2) / (2 * n)
 
-        delta = cost_prime(acs[-1], y) * sigmoid_prime(zs[-1])
-        nabla_b = [np.zeros_like(b) for b in self.biases]
+    def cost_w(self, x, y, ws):
+        return self.cost(x, y, ws=ws)
+
+    def cost_b(self, x, y, bs):
+        return self.cost(x, y, bs=bs)
+
+    def numerical_gradient(self, x, y, epsilon=1e-5):
+        cost = lambda: self.cost(x, y)
+        C = cost()
+
         nabla_w = [np.zeros_like(w) for w in self.weights]
+        nabla_b = [np.zeros_like(b) for b in self.biases]
 
-        def update(l):
-            nabla_w[-l] = delta @ acs[-l - 1].T
-            nabla_b[-l] = delta
+        for l, w in enumerate(self.weights):
+            for i in range(w.shape[0]):
+                for j in range(w.shape[1]):
+                    old_v = w[i, j]
+                    self.weights[l][i, j] = old_v + epsilon
+                    nabla_w[l][i, j] = (cost() - C) / epsilon
+                    self.weights[l][i, j] = old_v
 
-        update(1)
-
-        for l in range(2, self.layer_num):
-            delta = self.weights[-l + 1].T @ delta * sigmoid_prime(zs[-l])
-            update(l)
+        for l, b in enumerate(self.biases):
+            for i in range(b.shape[0]):
+                old_v = b[i, 0]
+                self.biases[l][i, 0] = old_v + epsilon
+                nabla_b[l][i, 0] = (cost() - C) / epsilon
+                self.biases[l][i, 0] = old_v
 
         return nabla_w, nabla_b
 
@@ -61,7 +82,7 @@ class Network:
         nabla_b = [np.zeros_like(b) for b in self.biases]
 
         for x, y in batch:
-            delta_nabla_w, delta_nabla_b = self.back_propagation(x, y)
+            delta_nabla_w, delta_nabla_b = self.numerical_gradient(x, y)
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
 
