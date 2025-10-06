@@ -25,7 +25,7 @@ class Network:
         acs = [a]
         zs = []
         for w, b in zip(self.weights, self.biases):
-            z = np.dot(w, a) + b
+            z = w @ a + b
             zs.append(z)
             a = sigmoid(z)
             acs.append(a)
@@ -41,26 +41,24 @@ class Network:
         acs, zs = self.feed_forward_az(x)
 
         delta = cost_prime(acs[-1], y) * sigmoid_prime(zs[-1])
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        nabla_b = [np.zeros_like(b) for b in self.biases]
+        nabla_w = [np.zeros_like(w) for w in self.weights]
 
         def update(l):
-            nabla_w[-l] = np.dot(delta, acs[-l - 1].transpose())
+            nabla_w[-l] = delta @ acs[-l - 1].T
             nabla_b[-l] = delta
 
         update(1)
 
         for l in range(2, self.layer_num):
-            delta = np.dot(self.weights[-l + 1].transpose(), delta) * sigmoid_prime(
-                zs[-l]
-            )
+            delta = self.weights[-l + 1].T @ delta * sigmoid_prime(zs[-l])
             update(l)
 
         return nabla_w, nabla_b
 
     def update_batch(self, batch, eta):
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros_like(w) for w in self.weights]
+        nabla_b = [np.zeros_like(b) for b in self.biases]
 
         for x, y in batch:
             delta_nabla_w, delta_nabla_b = self.back_propagation(x, y)
