@@ -1,3 +1,11 @@
 {
-    "cSpell.words": ["hstack", "keepdims", "nabla", "numpy", "randn"]
+    "cSpell.words": [
+        "hstack",
+        "iternext",
+        "keepdims",
+        "nabla",
+        "nditer",
+        "numpy",
+        "randn"
+    ]
 }

@@ -61,19 +61,24 @@ class Network:
         nabla_b = [np.zeros_like(b) for b in self.biases]
 
         for l, w in enumerate(self.weights):
-            for i in range(w.shape[0]):
-                for j in range(w.shape[1]):
-                    old_v = w[i, j]
-                    self.weights[l][i, j] = old_v + epsilon
-                    nabla_w[l][i, j] = (cost() - C) / epsilon
-                    self.weights[l][i, j] = old_v
+            it = np.nditer(w, flags=["multi_index"], op_flags=[["readwrite"]])
+            while not it.finished:
+                idx = it.multi_index
+                old_val = w[idx]
+                w[idx] = old_val + epsilon
+                nabla_w[l][idx] = (cost() - C) / epsilon
+                w[idx] = old_val
+                it.iternext()
 
         for l, b in enumerate(self.biases):
-            for i in range(b.shape[0]):
-                old_v = b[i, 0]
-                self.biases[l][i, 0] = old_v + epsilon
-                nabla_b[l][i, 0] = (cost() - C) / epsilon
-                self.biases[l][i, 0] = old_v
+            it = np.nditer(b, flags=["multi_index"], op_flags=[["readwrite"]])
+            while not it.finished:
+                idx = it.multi_index
+                old_val = b[idx]
+                b[idx] = old_val + epsilon
+                nabla_b[l][idx] = (cost() - C) / epsilon
+                b[idx] = old_val
+                it.iternext()
 
         return nabla_w, nabla_b
 
